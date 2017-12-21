@@ -238,6 +238,28 @@ def test_test_client_context_binding(app, client):
         raise AssertionError('some kind of exception expected')
 
 
+def test_test_client_in_app_context(app, client):
+    @app.route('/')
+    def index():
+        if hasattr(flask.g, 'value'):
+            flask.g.value += 1
+        else:
+            flask.g.value = 0
+        return bytes(flask.g.value)
+
+    with app.app_context():
+        with client:
+            resp = client.get('/')
+            assert flask.g.value == 0
+            assert resp.data == b'0'
+            assert resp.status_code == 200
+
+            resp = client.get('/')
+            assert flask.g.value == 0
+            assert resp.data == b'0'
+            assert resp.status_code == 200
+
+
 def test_reuse_client(client):
     c = client
 
